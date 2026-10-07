@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | MediCare Hospital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="dashboard-container">
+    <div th:replace="~{fragments/sidebar :: patientSidebar('profile')}"></div>
+
+    <div class="dashboard-content">
+        <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Patient Profile & Settings</h3>
+                <p class="text-muted small mb-0">Manage your personal demographics, emergency contact, and account password</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Profile Summary Card -->
+            <div class="col-lg-4">
+                <div class="card custom-card p-4 text-center shadow-sm">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-person-fill fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" th:text="${patient.user.name}">Patient Name</h4>
+                    <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill mb-3">Registered Patient</span>
+                    
+                    <div class="text-start bg-light p-3 rounded-3 small">
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Email Address:</span>
+                            <strong th:text="${patient.user.email}">email@example.com</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Contact Phone:</span>
+                            <strong th:text="${patient.user.phone}">+1 555-0199</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Date of Birth:</span>
+                            <strong th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'dd MMM yyyy') : 'Not Provided'}">01 Jan 1995</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Gender:</span>
+                            <strong th:text="${patient.gender != null ? patient.gender.displayName : 'Not Provided'}">Male</strong>
+                        </div>
+                        <div>
+                            <span class="text-muted d-block">Blood Group:</span>
+                            <span class="badge bg-danger" th:text="${patient.bloodGroup != null ? patient.bloodGroup : 'O+'}">O+</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Change Card -->
+                <div class="card custom-card p-4 mt-4 shadow-sm">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock text-primary me-2"></i> Change Password</h5>
+                    
+                    <div th:if="${passwordErrorMessage}" class="alert alert-danger small py-2">
+                        <i class="bi bi-exclamation-circle me-1"></i> <span th:text="${passwordErrorMessage}">Password error</span>
+                    </div>
+
+                    <form th:action="@{/patient/change-password}" th:object="${changePasswordDto}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Current Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{currentPassword}" class="form-control form-control-sm" required placeholder="Enter existing password">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">New Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{newPassword}" class="form-control form-control-sm" required placeholder="Min 6 characters">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Confirm New Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{confirmPassword}" class="form-control form-control-sm" required placeholder="Re-type new password">
+                        </div>
+
+                        <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-semibold">
+                            <i class="bi bi-key me-1"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Edit Profile Details Form -->
+            <div class="col-lg-8">
+                <div class="card custom-card p-4 p-md-5 shadow-sm">
+                    <h4 class="fw-bold mb-4"><i class="bi bi-pencil-square text-primary me-2"></i> Edit Personal Information</h4>
+
+                    <form th:action="@{/patient/profile/update}" th:object="${profileDto}" method="post" class="row g-3">
+                        <input type="hidden" th:field="*{id}">
+
+                        <!-- Full Name -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{name}" class="form-control" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name error</div>
+                        </div>
+
+                        <!-- Email (Disabled for safety) -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Email Address (Registered)</label>
+                            <input type="email" th:field="*{email}" class="form-control bg-light" readonly>
+                            <small class="text-muted">Email is used for system authentication.</small>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Phone Number <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{phone}" class="form-control" th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Phone error</div>
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Date of Birth</label>
+                            <input type="date" th:field="*{dateOfBirth}" class="form-control">
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Gender</label>
+                            <select th:field="*{gender}" class="form-select">
+                                <option value="">Select Gender</option>
+                                <option th:each="g : ${genders}" th:value="${g}" th:text="${g.displayName}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Blood Group -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Blood Group</label>
+                            <select th:field="*{bloodGroup}" class="form-select">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Residential Address</label>
+                            <input type="text" th:field="*{address}" class="form-control" placeholder="House/Street, City, Zip">
+                        </div>
+
+                        <!-- Emergency Contact -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Emergency Contact Information</label>
+                            <input type="text" th:field="*{emergencyContact}" class="form-control" placeholder="Name and telephone number of family or guardian">
+                        </div>
+
+                        <!-- Medical History Notes -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Known Allergies / Past Medical History Notes</label>
+                            <textarea th:field="*{medicalHistory}" class="form-control" rows="3" placeholder="Chronic conditions (e.g. Asthma, Diabetes, Hypertension), penicillin allergy, previous surgeries..."></textarea>
+                        </div>
+
+                        <div class="col-12 text-end pt-3 border-top">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

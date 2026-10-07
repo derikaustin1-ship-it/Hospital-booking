@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<!-- Patient Sidebar Fragment -->
+<div th:fragment="patientSidebar(activeTab)" class="sidebar">
+    <div class="d-flex align-items-center gap-2 mb-4 px-2">
+        <div class="bg-primary text-white p-2 rounded-3">
+            <i class="bi bi-heart-pulse-fill fs-5"></i>
+        </div>
+        <div>
+            <h6 class="mb-0 fw-bold">Patient Portal</h6>
+            <small class="text-muted" sec:authentication="name">patient@example.com</small>
+        </div>
+    </div>
+
+    <div class="sidebar-heading">Menu</div>
+    <ul class="sidebar-nav">
+        <li class="nav-item">
+            <a th:href="@{/patient/dashboard}" class="nav-link" th:classappend="${activeTab == 'dashboard' ? 'active' : ''}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/patient/doctors}" class="nav-link" th:classappend="${activeTab == 'doctors' ? 'active' : ''}">
+                <i class="bi bi-search-heart"></i> Find Doctors
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/patient/appointment/book}" class="nav-link" th:classappend="${activeTab == 'book' ? 'active' : ''}">
+                <i class="bi bi-calendar-plus"></i> Book Appointment
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/patient/appointments}" class="nav-link" th:classappend="${activeTab == 'appointments' ? 'active' : ''}">
+                <i class="bi bi-calendar-check"></i> My Appointments
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/patient/profile}" class="nav-link" th:classappend="${activeTab == 'profile' ? 'active' : ''}">
+                <i class="bi bi-person-circle"></i> My Profile
+            </a>
+        </li>
+    </ul>
+
+    <hr class="my-4 text-muted">
+
+    <div class="px-2">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill btn-sm d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Doctor Sidebar Fragment -->
+<div th:fragment="doctorSidebar(activeTab)" class="sidebar">
+    <div class="d-flex align-items-center gap-2 mb-4 px-2">
+        <div class="bg-primary text-white p-2 rounded-3">
+            <i class="bi bi-hospital fs-5"></i>
+        </div>
+        <div>
+            <h6 class="mb-0 fw-bold">Doctor Admin</h6>
+            <small class="text-muted" sec:authentication="name">doctor@example.com</small>
+        </div>
+    </div>
+
+    <div class="sidebar-heading">Management</div>
+    <ul class="sidebar-nav">
+        <li class="nav-item">
+            <a th:href="@{/doctor/dashboard}" class="nav-link" th:classappend="${activeTab == 'dashboard' ? 'active' : ''}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/doctor/appointments}" class="nav-link" th:classappend="${activeTab == 'appointments' ? 'active' : ''}">
+                <i class="bi bi-calendar-range"></i> Appointments
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/doctor/availability}" class="nav-link" th:classappend="${activeTab == 'availability' ? 'active' : ''}">
+                <i class="bi bi-clock-history"></i> Manage Availability
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/doctor/patients}" class="nav-link" th:classappend="${activeTab == 'patients' ? 'active' : ''}">
+                <i class="bi bi-people"></i> Patients
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:href="@{/doctor/profile}" class="nav-link" th:classappend="${activeTab == 'profile' ? 'active' : ''}">
+                <i class="bi bi-person-badge"></i> Doctor Profile
+            </a>
+        </li>
+    </ul>
+
+    <hr class="my-4 text-muted">
+
+    <div class="px-2">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill btn-sm d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

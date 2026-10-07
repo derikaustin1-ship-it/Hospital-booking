@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile | MediCare Hospital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="dashboard-container">
+    <div th:replace="~{fragments/sidebar :: doctorSidebar('profile')}"></div>
+
+    <div class="dashboard-content">
+        <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Doctor Profile & Professional Info</h3>
+                <p class="text-muted small mb-0">Update your clinical qualifications, consultation fee, bio, and clinic location</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Profile Preview & Password -->
+            <div class="col-lg-4">
+                <div class="card custom-card p-4 text-center shadow-sm">
+                    <img th:src="${doctor.profileImage != null ? doctor.profileImage : 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&h=200&fit=crop'}"
+                         class="doctor-avatar-lg mx-auto mb-3" alt="Avatar">
+                    <h4 class="fw-bold mb-1" th:text="${doctor.user.name}">Dr. Doctor Name</h4>
+                    <span class="badge bg-primary px-3 py-1 rounded-pill mb-2" th:text="${doctor.specialization}">Specialization</span>
+                    <p class="text-muted small mb-3" th:text="${doctor.qualification}">Qualification</p>
+
+                    <div class="text-start bg-light p-3 rounded-3 small">
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Email:</span>
+                            <strong th:text="${doctor.user.email}">doctor@example.com</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Phone:</span>
+                            <strong th:text="${doctor.user.phone}">+1 555-0211</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Experience:</span>
+                            <strong class="text-primary"><span th:text="${doctor.experienceYears}">12</span> Years</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted d-block">Consultation Fee:</span>
+                            <strong class="text-success">$<span th:text="${doctor.consultationFee}">800.00</span></strong>
+                        </div>
+                        <div>
+                            <span class="text-muted d-block">Status:</span>
+                            <span class="badge" th:classappend="${doctor.available ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}"
+                                  th:text="${doctor.available ? 'Active & Accepting Appointments' : 'Paused / Unavailable'}">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password Form -->
+                <div class="card custom-card p-4 mt-4 shadow-sm">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock text-primary me-2"></i> Change Password</h5>
+
+                    <div th:if="${passwordErrorMessage}" class="alert alert-danger small py-2">
+                        <i class="bi bi-exclamation-circle me-1"></i> <span th:text="${passwordErrorMessage}">Error</span>
+                    </div>
+
+                    <form th:action="@{/doctor/change-password}" th:object="${changePasswordDto}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Current Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{currentPassword}" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">New Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{newPassword}" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Confirm New Password <span class="text-danger">*</span></label>
+                            <input type="password" th:field="*{confirmPassword}" class="form-control form-control-sm" required>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-semibold">
+                            <i class="bi bi-key me-1"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Edit Doctor Profile Form -->
+            <div class="col-lg-8">
+                <div class="card custom-card p-4 p-md-5 shadow-sm">
+                    <h4 class="fw-bold mb-4"><i class="bi bi-pencil-square text-primary me-2"></i> Edit Doctor Details</h4>
+
+                    <form th:action="@{/doctor/profile/update}" th:object="${profileDto}" method="post" class="row g-3">
+                        <input type="hidden" th:field="*{id}">
+
+                        <!-- Doctor Name -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Doctor Full Name <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{name}" class="form-control" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name error</div>
+                        </div>
+
+                        <!-- Email (Read-only) -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Email (System Login)</label>
+                            <input type="email" th:field="*{email}" class="form-control bg-light" readonly>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Phone Number <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{phone}" class="form-control" th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''" required>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Phone error</div>
+                        </div>
+
+                        <!-- Specialization -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Specialization <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{specialization}" class="form-control" th:classappend="${#fields.hasErrors('specialization')} ? 'is-invalid' : ''" required placeholder="e.g. Cardiologist">
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('specialization')}" th:errors="*{specialization}">Spec error</div>
+                        </div>
+
+                        <!-- Qualification -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Qualifications & Degrees <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{qualification}" class="form-control" required placeholder="e.g. MBBS, MD, DM Cardiology">
+                        </div>
+
+                        <!-- Experience -->
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Experience (Years) <span class="text-danger">*</span></label>
+                            <input type="number" th:field="*{experienceYears}" min="0" max="60" class="form-control" required>
+                        </div>
+
+                        <!-- Fee -->
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Consultation Fee ($) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" th:field="*{consultationFee}" min="0" class="form-control" required>
+                        </div>
+
+                        <!-- Hospital Name -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Hospital Department / Center</label>
+                            <input type="text" th:field="*{hospitalName}" class="form-control" placeholder="MediCare Heart Institute">
+                        </div>
+
+                        <!-- Clinic Address / Room -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Clinic Room / Location</label>
+                            <input type="text" th:field="*{clinicAddress}" class="form-control" placeholder="Suite 302, Cardiac Wing, 3rd Floor">
+                        </div>
+
+                        <!-- Profile Image URL -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Profile Photo URL (Web Link)</label>
+                            <input type="text" th:field="*{profileImage}" class="form-control" placeholder="https://images.unsplash.com/...">
+                        </div>
+
+                        <!-- Biography / About -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Professional Biography & Expertise</label>
+                            <textarea th:field="*{about}" class="form-control" rows="4" placeholder="Describe your clinical expertise, focus areas, past medical experience..."></textarea>
+                        </div>
+
+                        <!-- Available Toggle -->
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" th:field="*{available}" id="availableCheck">
+                                <label class="form-check-label fw-bold small" for="availableCheck">
+                                    Currently Accepting New Patient Appointments
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 text-end pt-3 border-top">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

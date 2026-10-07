@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${doctor.user.name + ' | Doctor Profile'}">Doctor Profile | MediCare Hospital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <!-- Doctor Overview Left Card -->
+        <div class="col-lg-4">
+            <div class="card custom-card p-4 text-center shadow-sm">
+                <img th:src="${doctor.profileImage != null ? doctor.profileImage : 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&h=300&fit=crop'}"
+                     class="doctor-avatar-lg mx-auto mb-3" alt="Doctor Photo">
+                
+                <h4 class="fw-bold mb-1" th:text="${doctor.user.name}">Dr. Doctor Name</h4>
+                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2" th:text="${doctor.specialization}">Cardiologist</span>
+                <p class="text-muted small mb-3" th:text="${doctor.qualification}">MBBS, MD Cardiology</p>
+
+                <div class="bg-light p-3 rounded-3 mb-4 text-start">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Experience:</span>
+                        <span class="fw-bold text-dark"><span th:text="${doctor.experienceYears}">12</span> Years</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Consultation Fee:</span>
+                        <span class="fw-bold text-success">$<span th:text="${doctor.consultationFee}">800.00</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Status:</span>
+                        <span class="badge bg-success-subtle text-success">Accepting Appointments</span>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <a th:href="@{/patient/appointment/book(doctorId=${doctor.id})}" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                        <i class="bi bi-calendar2-check me-2"></i> Book Appointment
+                    </a>
+                </div>
+            </div>
+
+            <!-- Clinic Contact Card -->
+            <div class="card custom-card p-4 mt-4 shadow-sm">
+                <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i> Clinic Location</h6>
+                <p class="fw-semibold mb-1" th:text="${doctor.hospitalName}">MediCare Multi-Speciality Hospital</p>
+                <p class="text-muted small mb-3" th:text="${doctor.clinicAddress}">Block A, Level 2</p>
+                <div class="small text-muted border-top pt-2">
+                    <i class="bi bi-telephone text-primary me-2"></i> Phone: <span th:text="${doctor.user.phone}">+1 555-0199</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Biography & Schedule -->
+        <div class="col-lg-8">
+            <div class="card custom-card p-4 mb-4 shadow-sm">
+                <h5 class="fw-bold mb-3"><i class="bi bi-person-lines-fill text-primary me-2"></i> About the Doctor</h5>
+                <p class="text-muted" th:text="${doctor.about}">
+                    Doctor biography and clinical background information.
+                </p>
+            </div>
+
+            <div class="card custom-card p-4 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-calendar3-week text-primary me-2"></i> Weekly Consultation Timetable</h5>
+                    <span class="badge bg-light text-muted border">Standard slot: 30 mins</span>
+                </div>
+
+                <div th:if="${#lists.isEmpty(doctor.availabilities)}" class="text-muted text-center py-4">
+                    <i class="bi bi-calendar-x fs-2 text-muted d-block mb-2"></i>
+                    <p>No availability schedules currently posted. Please contact reception.</p>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(doctor.availabilities)}" class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Day of Week</th>
+                                <th>Working Hours</th>
+                                <th>Slot Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="avail : ${doctor.availabilities}">
+                                <td class="fw-bold text-primary" th:text="${avail.dayOfWeek}">MONDAY</td>
+                                <td>
+                                    <i class="bi bi-clock text-muted me-1"></i>
+                                    <span th:text="${#temporals.format(avail.startTime, 'hh:mm a')}">09:00 AM</span> - 
+                                    <span th:text="${#temporals.format(avail.endTime, 'hh:mm a')}">01:00 PM</span>
+                                </td>
+                                <td><span th:text="${avail.slotDurationMinutes}">30</span> Minutes</td>
+                                <td><span class="badge bg-success-subtle text-success">Active Schedule</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-semibold">Ready to schedule your consultation?</span>
+                        <small class="text-muted d-block">Select your preferred date & time on our interactive booking page.</small>
+                    </div>
+                    <a th:href="@{/patient/appointment/book(doctorId=${doctor.id})}" class="btn btn-primary rounded-pill px-4">
+                        Select Slot & Book
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

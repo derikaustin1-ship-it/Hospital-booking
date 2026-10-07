@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Appointments | MediCare Hospital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="dashboard-container">
+    <div th:replace="~{fragments/sidebar :: doctorSidebar('appointments')}"></div>
+
+    <div class="dashboard-content">
+        <div th:replace="~{fragments/alerts :: alerts}"></div>
+
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Doctor Appointment Management</h3>
+                <p class="text-muted small mb-0">Review consultation bookings, manage approvals, and record clinical observations</p>
+            </div>
+        </div>
+
+        <!-- Filter Tabs Navigation -->
+        <ul class="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-sm border">
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'ALL' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='ALL')}">All</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'TODAY' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='TODAY')}">Today</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'PENDING' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='PENDING')}">Pending Requests</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'UPCOMING' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='UPCOMING')}">Upcoming</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'APPROVED' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='APPROVED')}">Approved</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'COMPLETED' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='COMPLETED')}">Completed</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill px-3" th:classappend="${currentFilter == 'CANCELLED' ? 'active' : ''}" th:href="@{/doctor/appointments(filter='CANCELLED')}">Cancelled</a>
+            </li>
+        </ul>
+
+        <!-- Appointments Table Card -->
+        <div class="card custom-card shadow-sm">
+            <div class="card-body p-0">
+                <div th:if="${#lists.isEmpty(appointments)}" class="text-center py-5 text-muted">
+                    <i class="bi bi-calendar-x fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="fw-bold">No Appointments Found</h5>
+                    <p class="small text-muted mb-0">There are no appointments matching the selected filter criteria.</p>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(appointments)}" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Patient Details</th>
+                                <th>Date & Time</th>
+                                <th>Chief Complaint</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Manage Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="apt : ${appointments}">
+                                <td class="ps-4 fw-bold text-primary">#<span th:text="${apt.id}">1</span></td>
+                                <td>
+                                    <strong class="text-dark" th:text="${apt.patient.user.name}">Patient Name</strong>
+                                    <span th:if="${apt.patient.bloodGroup != null}" class="badge bg-danger-subtle text-danger ms-1" th:text="${apt.patient.bloodGroup}">A+</span>
+                                    <small class="text-muted d-block"><i class="bi bi-telephone me-1"></i> <span th:text="${apt.patient.user.phone}">Phone</span></small>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark" th:text="${#temporals.format(apt.appointmentDate, 'dd MMM yyyy')}">01 Jan 2026</span><br>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i> <span th:text="${#temporals.format(apt.appointmentTime, 'hh:mm a')}">10:00 AM</span></small>
+                                </td>
+                                <td>
+                                    <span class="fw-medium" th:text="${#strings.abbreviate(apt.reason, 35)}">Reason</span>
+                                    <small class="d-block text-muted" th:if="${apt.notes != null and !apt.notes.isBlank()}" th:text="${'Note: ' + #strings.abbreviate(apt.notes, 25)}"></small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status" th:classappend="'bg-' + ${apt.status.badgeClass}" th:text="${apt.status.displayName}">Pending</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group gap-1">
+                                        <!-- View Details Modal Trigger -->
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" th:data-bs-target="'#viewDoctorModal-' + ${apt.id}">
+                                            <i class="bi bi-eye"></i> Details
+                                        </button>
+
+                                        <!-- If PENDING: Approve and Reject buttons -->
+                                        <form th:if="${apt.isPending()}" th:action="@{/doctor/appointment/{id}/approve(id=${apt.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-2" onclick="return confirm('Approve this appointment?');">
+                                                <i class="bi bi-check-lg"></i> Approve
+                                            </button>
+                                        </form>
+
+                                        <button th:if="${apt.isPending()}" type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2"
+                                                data-bs-toggle="modal" th:data-bs-target="'#rejectModalTable-' + ${apt.id}">
+                                            <i class="bi bi-x-lg"></i> Reject
+                                        </button>
+
+                                        <!-- If APPROVED: Complete button -->
+                                        <button th:if="${apt.isApproved()}" type="button" class="btn btn-sm btn-primary rounded-pill px-3"
+                                                data-bs-toggle="modal" th:data-bs-target="'#completeModalTable-' + ${apt.id}">
+                                            <i class="bi bi-clipboard2-check"></i> Complete
+                                        </button>
+                                    </div>
+
+                                    <!-- View Details Modal -->
+                                    <div class="modal fade text-start" th:id="'viewDoctorModal-' + ${apt.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                <div class="modal-header border-bottom">
+                                                    <h5 class="modal-title fw-bold">Appointment Information #<span th:text="${apt.id}">1</span></h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-4">
+                                                    <div class="bg-light p-3 rounded-3 mb-3">
+                                                        <h6 class="fw-bold mb-1" th:text="${apt.patient.user.name}">Patient Name</h6>
+                                                        <div class="row g-2 small text-muted">
+                                                            <div class="col-6">Email: <strong th:text="${apt.patient.user.email}">email</strong></div>
+                                                            <div class="col-6">Phone: <strong th:text="${apt.patient.user.phone}">phone</strong></div>
+                                                            <div class="col-6">DOB: <strong th:text="${apt.patient.dateOfBirth}">DOB</strong></div>
+                                                            <div class="col-6">Blood Group: <strong th:text="${apt.patient.bloodGroup}">Blood</strong></div>
+                                                            <div class="col-12" th:if="${apt.patient.address != null}">Address: <span th:text="${apt.patient.address}">Address</span></div>
+                                                            <div class="col-12 text-danger" th:if="${apt.patient.emergencyContact != null}">Emergency Contact: <strong th:text="${apt.patient.emergencyContact}">Contact</strong></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-6">
+                                                            <span class="text-muted small d-block">Scheduled Date:</span>
+                                                            <strong th:text="${#temporals.format(apt.appointmentDate, 'dd MMMM yyyy')}">Date</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <span class="text-muted small d-block">Scheduled Time:</span>
+                                                            <strong th:text="${#temporals.format(apt.appointmentTime, 'hh:mm a')}">Time</strong>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <span class="text-muted small d-block">Reason for Consultation:</span>
+                                                        <p class="mb-0 fw-medium" th:text="${apt.reason}">Reason</p>
+                                                    </div>
+
+                                                    <div class="mb-3" th:if="${apt.notes != null and !apt.notes.isBlank()}">
+                                                        <span class="text-muted small d-block">Patient Notes & Symptoms:</span>
+                                                        <p class="text-muted small mb-0" th:text="${apt.notes}">Notes</p>
+                                                    </div>
+
+                                                    <div class="mb-3" th:if="${apt.patient.medicalHistory != null and !apt.patient.medicalHistory.isBlank()}">
+                                                        <span class="text-muted small d-block">Past Medical History / Known Allergies:</span>
+                                                        <p class="text-muted small mb-0" th:text="${apt.patient.medicalHistory}">History</p>
+                                                    </div>
+
+                                                    <div class="p-3 bg-light rounded-3 border mt-3" th:if="${apt.doctorRemarks != null and !apt.doctorRemarks.isBlank()}">
+                                                        <span class="fw-bold text-primary small d-block mb-1">Your Consultation Remarks:</span>
+                                                        <p class="small text-dark mb-0" th:text="${apt.doctorRemarks}">Remarks</p>
+                                                    </div>
+
+                                                    <div class="p-3 bg-danger-subtle rounded-3 border border-danger-subtle mt-3" th:if="${apt.cancellationReason != null and !apt.cancellationReason.isBlank()}">
+                                                        <span class="fw-bold text-danger small d-block mb-1">Cancellation / Rejection Reason:</span>
+                                                        <p class="small text-dark mb-0" th:text="${apt.cancellationReason}">Reason</p>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0">
+                                                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rejection Modal -->
+                                    <div th:if="${apt.isPending()}" class="modal fade text-start" th:id="'rejectModalTable-' + ${apt.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                <form th:action="@{/doctor/appointment/{id}/reject(id=${apt.id})}" method="post">
+                                                    <div class="modal-header border-bottom">
+                                                        <h5 class="modal-title fw-bold text-danger">Reject Appointment #<span th:text="${apt.id}">1</span></h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4">
+                                                        <p class="mb-3">Please specify reason for rejecting appointment with <strong><span th:text="${apt.patient.user.name}">Patient</span></strong>:</p>
+                                                        <textarea name="rejectionReason" class="form-control" rows="3" required placeholder="e.g., Doctor on emergency duty, surgery scheduled, slot rescheduled..."></textarea>
+                                                    </div>
+                                                    <div class="modal-footer border-0">
+                                                        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger rounded-pill fw-bold">Confirm Rejection</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Complete Consultation Modal -->
+                                    <div th:if="${apt.isApproved()}" class="modal fade text-start" th:id="'completeModalTable-' + ${apt.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content rounded-4 border-0 shadow">
+                                                <form th:action="@{/doctor/appointment/{id}/complete(id=${apt.id})}" method="post">
+                                                    <div class="modal-header border-bottom">
+                                                        <h5 class="modal-title fw-bold text-primary"><i class="bi bi-clipboard2-pulse me-2"></i> Complete Consultation #<span th:text="${apt.id}">1</span></h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4">
+                                                        <p class="mb-3">Complete consultation for <strong><span th:text="${apt.patient.user.name}">Patient</span></strong>.</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Doctor Remarks & Clinical Advice / Prescription Notes:</label>
+                                                            <textarea name="doctorRemarks" class="form-control" rows="3" placeholder="Enter diagnostic observations, prescribed medications, follow-up advice..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0">
+                                                        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary rounded-pill fw-bold">Complete & Save</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
